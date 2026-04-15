@@ -2,7 +2,7 @@ import { useState } from 'react'
 import CourseInfo from './components/CourseInfo'
 import WeatherCard from './components/WeatherCard'
 import YardageClub from './components/YardageClub'
-import RulesAdvisor from './components/RulesAdvisor'
+import RulesChat from './components/RulesChat'
 import './App.css'
 
 export default function App() {
@@ -37,7 +37,7 @@ export default function App() {
           <YardageClub yardage={yardage} onYardageChange={setYardage} weather={weather} />
         </section>
         <section className="card rules-card">
-          <RulesAdvisor />
+          <RulesChat />
         </section>
       </main>
     </div>

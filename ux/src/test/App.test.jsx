@@ -99,26 +99,51 @@ describe('YardageClub', () => {
   })
 })
 
-describe('RulesAdvisor', () => {
-  it('shows placeholder hint when no situation selected', () => {
+describe('RulesChat', () => {
+  it('shows the empty-state hint on load', () => {
     render(<App />)
-    expect(screen.getByText('Select a situation to get rules guidance.')).toBeInTheDocument()
+    expect(screen.getByText(/Describe your situation or upload a photo/i)).toBeInTheDocument()
   })
 
-  it('displays advice when a situation is selected', () => {
+  it('renders the rules question textarea', () => {
     render(<App />)
-    const select = screen.getByLabelText('Select Situation')
-    fireEvent.change(select, { target: { value: 'penalty-area' } })
-    expect(screen.getByText('Rule 17')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Ball in Penalty Area (Water Hazard)' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Rules question')).toBeInTheDocument()
   })
 
-  it('updates advice when situation changes', () => {
+  it('send button is disabled when textarea is empty', () => {
     render(<App />)
-    const select = screen.getByLabelText('Select Situation')
-    fireEvent.change(select, { target: { value: 'lost-ball' } })
-    expect(screen.getByText('Rule 18.2')).toBeInTheDocument()
-    fireEvent.change(select, { target: { value: 'unplayable' } })
-    expect(screen.getByText('Rule 19')).toBeInTheDocument()
+    expect(screen.getByLabelText('Send')).toBeDisabled()
+  })
+
+  it('send button enables once text is typed', () => {
+    render(<App />)
+    fireEvent.change(screen.getByLabelText('Rules question'), {
+      target: { value: 'My ball is in a penalty area' },
+    })
+    expect(screen.getByLabelText('Send')).not.toBeDisabled()
+  })
+
+  it('typing shows the user message when sent (fetch stubbed)', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => {
+      const encoder = new TextEncoder()
+      const chunk = encoder.encode('data: [DONE]\n\n')
+      let called = false
+      const reader = {
+        read: vi.fn(async () => {
+          if (!called) { called = true; return { done: false, value: chunk } }
+          return { done: true, value: undefined }
+        }),
+      }
+      return Promise.resolve({ body: { getReader: () => reader } })
+    }))
+
+    render(<App />)
+    fireEvent.change(screen.getByLabelText('Rules question'), {
+      target: { value: 'Ball in penalty area' },
+    })
+    fireEvent.click(screen.getByLabelText('Send'))
+    expect(screen.getByText('Ball in penalty area')).toBeInTheDocument()
+
+    vi.unstubAllGlobals()
   })
 })
