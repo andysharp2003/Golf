@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "eval:rules": "promptfoo eval -c promptfoo.config.js"
+    "eval:rules": "promptfoo eval -c promptfoo.config.js",
+    "eval:lm-judge": "promptfoo eval -c promptfoo.lm-judge.config.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",
