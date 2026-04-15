@@ -1,5 +1,6 @@
 import express from 'express'
 import Anthropic from '@anthropic-ai/sdk'
+import { retrieveRelevantRules, buildAugmentedContext } from './embeddings-utils.js'
 
 const app = express()
 app.use(express.json({ limit: '10mb' }))
@@ -28,10 +29,25 @@ app.post('/api/rules', async (req, res) => {
   res.setHeader('Connection', 'keep-alive')
 
   try {
+    // Extract the latest user message for RAG retrieval
+    const lastUserMsg = messages.findLast(m => m.role === 'user')
+    const userQuestion = typeof lastUserMsg.content === 'string'
+      ? lastUserMsg.content
+      : lastUserMsg.content.find(c => c.type === 'text')?.text || ''
+
+    // Retrieve relevant rules from the knowledge base
+    const retrievedRules = await retrieveRelevantRules(userQuestion, 3)
+    const augmentedContext = buildAugmentedContext(retrievedRules)
+
+    // Build augmented system prompt with retrieved rules
+    const augmentedSystemPrompt = `${SYSTEM_PROMPT}
+
+${augmentedContext}`
+
     const stream = client.messages.stream({
       model: 'claude-opus-4-6',
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: augmentedSystemPrompt,
       messages,
     })
 
